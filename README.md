@@ -1,4 +1,6 @@
-# Representantes: REINALDO PEREIRA DOS SANTOS - RA 923202124 | RODRIGO SOUZA FELIZARDO - RA 924101083
+# Suportes Plus
+
+Representantes: REINALDO PEREIRA DOS SANTOS - RA 923202124 - Analista de Projetos | RODRIGO SOUZA FELIZARDO - RA 924101083 - Analista DBA
 
 #Suportes PLUS
 Sistema de Gestão de Relacionamento com o Cliente voltado para equipes de Suporte Técnico.
