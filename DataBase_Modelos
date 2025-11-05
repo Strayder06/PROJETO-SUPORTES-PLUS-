@@ -36,4 +36,285 @@ O diagrama representa a modelagem de dados do sistema **SupportCRM (Suportes Plu
 
 ---
 
+# MER — Modelo Entidade-Relacionamento (Documentação)
+
+## Visão geral
+Este documento descreve as entidades, atributos e relacionamentos do modelo de dados para o **SupportCRM**.
+
+---
+
+## Entidades e atributos principais
+
+### users
+- **id** (PK)
+- name
+- email (unique)
+- phone
+- role (admin, agent, manager)
+- created_at, updated_at
+
+**Descrição:** representa os usuários do sistema (agentes, gestores, administradores).
+
+---
+
+### user_profiles (1:1 com users)
+- **user_id** (PK, FK → users.id)
+- bio
+- avatar_url
+- timezone
+- language
+
+**Justificativa:** separa dados opcionais e menos utilizados (perfil) dos dados essenciais de autenticação/identidade.
+
+---
+
+### customers
+- **id** (PK)
+- company_name
+- contact_name
+- contact_email
+- contact_phone
+- address
+- created_at, updated_at
+
+**Descrição:** clientes que solicitam suporte (pessoas físicas ou jurídicas).
+
+---
+
+### tickets
+- **id** (PK)
+- external_id (nullable, unique)
+- title
+- description
+- status
+- priority
+- created_at, updated_at
+- customer_id (FK → customers.id)
+- requester_id (FK → users.id, nullable) — agente que abriu o ticket
+- assigned_id (FK → users.id, nullable) — agente atribuído
+- sla_due_at (nullable)
+
+**Relacionamentos:**
+- `customers` 1 → N `tickets`
+- `users` 1 → N `tickets` (via `assigned_id` e `requester_id` em papéis diferentes)
+
+**Observação:** `external_id` permite mapear tickets importados de sistemas externos.
+
+---
+
+### ticket_messages
+- **id** (PK)
+- ticket_id (FK → tickets.id)
+- author_user_id (FK → users.id, nullable)
+- author_customer_id (FK → customers.id, nullable)
+- body
+- created_at
+
+**Descrição:** histórico de mensagens e trocas em cada ticket. Autor pode ser usuário ou cliente.
+
+---
+
+### ticket_tags
+- **id** (PK)
+- name (unique)
+
+**Descrição:** etiquetas para classificação rápida de tickets (ex.: "billing", "bug", "urgent").
+
+---
+
+### ticket_tag_map (N:N)
+- ticket_id (FK → tickets.id)
+- tag_id (FK → ticket_tags.id)
+- PK composta (ticket_id, tag_id)
+
+**Descrição:** mapeia tags para tickets (N:N).
+
+---
+
+### queues
+- **id** (PK)
+- name
+- description
+- created_at
+
+**Descrição:** filas de atendimento (ex.: "Suporte Nível 1", "Cobrança").
+
+---
+
+### queue_agents (N:N)
+- queue_id (FK → queues.id)
+- user_id (FK → users.id)
+- PK composta (queue_id, user_id)
+
+**Descrição:** quais agentes pertencem a cada fila (suporta rotação e alocação de times).
+
+---
+
+### attachments
+- **id** (PK)
+- ticket_id (FK → tickets.id)
+- filename
+- mime_type
+- url
+- uploaded_by (FK → users.id, nullable)
+- uploaded_at
+
+**Descrição:** arquivos associados a tickets.
+
+---
+
+### sla_policies
+- **id** (PK)
+- name
+- response_time_minutes
+- resolution_time_minutes
+- created_at
+
+**Descrição:** políticas SLA configuráveis.
+
+---
+
+### customer_sla
+- **id** (PK)
+- customer_id (FK → customers.id)
+- sla_policy_id (FK → sla_policies.id)
+- active (boolean)
+- assigned_at
+
+**Descrição:** atribuição de SLA por cliente.
+
+---
+
+### activities
+- **id** (PK)
+- user_id (FK → users.id)
+- ticket_id (FK → tickets.id, nullable)
+- action
+- details
+- created_at
+
+**Descrição:** registro de ações do sistema para auditoria (ex.: mudança de status).
+
+---
+
+### knowledge_articles
+- **id** (PK)
+- title
+- summary
+- body
+- author_id (FK → users.id)
+- published (boolean)
+- created_at, updated_at
+
+**Descrição:** base de conhecimento para autoatendimento.
+
+---
+
+### ticket_article_map (N:N)
+- ticket_id (FK → tickets.id)
+- article_id (FK → knowledge_articles.id)
+- PK composta (ticket_id, article_id)
+
+**Descrição:** ligações entre tickets e artigos sugeridos.
+
+---
+
+## Tipos de relacionamentos e cardinalidades
+
+- **1:1**
+  - `users` — `user_profiles`  
+    - Um usuário possui no máximo um perfil estendido; perfil existe somente se o usuário o preencher.
+- **1:N**
+  - `customers` — `tickets`  
+    - Um cliente pode abrir muitos tickets; cada ticket pertence a um cliente.
+  - `users` — `activities`
+- **N:N**
+  - `tickets` — `ticket_tags` via `ticket_tag_map`
+  - `tickets` — `knowledge_articles` via `ticket_article_map`
+  - `queues` — `users` via `queue_agents`
+
+## Regras de negócio que influenciam a modelagem
+
+1. **Um ticket sempre pertence a um cliente** — requisito para cobrar SLA e histórico. (FK: `tickets.customer_id` NOT NULL)
+2. **Um ticket pode ter múltiplos responsáveis ao longo do tempo**, mas apenas **um responsável atual** (`assigned_id`). Histórico de atribuições é mantido em `activities`.
+3. **Mensagens do ticket** podem ter autor tanto usuário quanto cliente; por isso dois campos `author_user_id` e `author_customer_id` (permitir nulos e validar apenas um preenchido por mensagem).
+4. **SLA por cliente** facilita cobrar planos diferentes por clientes distintos — implementado por `customer_sla`.
+5. **N:N para tags e artigos** permite classificação flexível e sugestão de conteúdo de KB.
+6. **Perfis separados** (1:1) permitem crescimento de atributos sem poluir tabela `users`.
+
+---
+
+# Justificativa de Normalização
+
+Este documento explica a aplicação das três primeiras formas normais (1FN, 2FN, 3FN) na modelagem do SupportCRM, com exemplos práticos e motivos de eventuais denormalizações controladas.
+
+---
+
+## 1FN — Primeira Forma Normal (Atomicidade)
+Requisitos:
+- Cada atributo deve ser atômico (não devem existir listas ou valores repetidos em uma única coluna).
+- Cada registro identificado por uma PK.
+
+**Aplicação prática:**
+- Em vez de armazenar várias tags em uma coluna `ticket.tags` (ex.: "bug,urgent"), criamos a tabela `ticket_tags` + ponte `ticket_tag_map` (N:N). Assim a 1FN é respeitada.
+- `ticket_messages` armazena cada mensagem como registro individual (não um array de mensagens).
+
+**Exemplo corrigido:**
+- Ruim (não 1FN): `tickets.tags = "billing,urgent"`
+- Bom (1FN): `ticket_tag_map` com uma linha por (ticket, tag).
+
+---
+
+## 2FN — Segunda Forma Normal (Dependência de toda a PK)
+Requisitos:
+- Estar em 1FN.
+- Em tabelas com PK composta, atributos não-chave devem depender da PK inteira, não de parte dela.
+
+**Aplicação prática:**
+- Em `ticket_tag_map` (PK composta `ticket_id, tag_id`) não existem atributos dependentes de só uma parte da PK — portanto está em 2FN.
+- `queue_agents` também tem PK composta e não contém atributos que violem 2FN.
+
+**Exemplo prático:**
+- Se tivéssemos `ticket_tag_map` com atributo `tag_name`, isso violaria 2FN (pois `tag_name` depende apenas de `tag_id`) — portanto `tag_name` está apenas em `ticket_tags`.
+
+---
+
+## 3FN — Terceira Forma Normal (Eliminação de dependências transitivas)
+Requisitos:
+- Estar em 2FN.
+- Não existirem dependências transitivas (A → B → C); atributos não-chave não devem depender de outros atributos não-chave.
+
+**Aplicação prática:**
+- `tickets` não armazena dados redundantes do cliente (como `customer_email`), pois essa informação está em `customers`. Assim evita-se dependência transitiva.
+- `users` e `user_profiles` foram separados para evitar que atributos opcionais (bio, avatar) causem redundância ou dependência transitiva nas operações diárias do usuário.
+
+**Exemplo prático:**
+- Ruim (violação 3FN): `tickets.customer_email` — duplicaria dado de `customers.email`.
+- Bom (3FN): `tickets.customer_id` → busca do email em `customers`.
+
+---
+
+## Casos de denormalização justificável
+Em alguns casos controlados, podemos denormalizar para ganho de performance ou simplicidade, desde que documentado:
+
+1. **Campos de leitura muito frequente:** Por exemplo, caso relatórios exijam sempre o `customer_name` junto ao ticket e gerar JOINs pesados, pode-se manter `tickets.customer_name` como campo redundante atualizado por trigger/na aplicação. **Justificativa:** reduz JOINs em relatórios críticos; **mitigação:** garantir atualização via trigger/aplicação ao alterar `customers.company_name`.
+
+2. **Caches e snapshots:** Criar tabelas de agregação (ex.: `report_ticket_counts_daily`) para consultas analíticas, evitando impactar a base transacional.
+
+3. **Indexação:** Prefira índices em colunas usadas em filtros (status, priority, assigned_id) antes de denormalizar.
+
+---
+
+## Exemplos práticos de eliminação de redundância
+- Tags migradas de coluna texto para `ticket_tag_map` + `ticket_tags`. Reduz duplicação de nomes de tag e facilita busca.
+- Artigos relacionados: `ticket_article_map` evita replicar texto de artigo dentro da tabela `tickets`.
+
+---
+
+## Conclusão
+O modelo foi projetado para cumprir 1FN, 2FN e 3FN na maioria das tabelas transacionais, garantindo consistência e evitando redundância. Denormalizações pontuais são aceitas somente quando há justificativa de desempenho e com mecanismos de sincronização/atualização para preservar integridade dos dados.
+
+---
+
+
 
