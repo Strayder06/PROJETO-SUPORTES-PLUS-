@@ -22,7 +22,7 @@ Empresas de suporte técnico, call centers e equipes de TI.
 - Base de conhecimento
 
 ## Tecnologias
-My SQL Workbench | SQL Developer | PostgreSQL | Power BI | Figma | Bizagi Modeler | GitHub Desktop | Visual Studio Code
+My SQL Workbench | SQL Developer | PostgreSQL | Power BI | Figma | dbdiagram.io | GitHub Desktop | Visual Studio Code
 
 
 ==================
