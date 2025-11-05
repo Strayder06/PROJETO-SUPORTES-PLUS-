@@ -1,1 +1,37 @@
 
+# DER — Diagrama Entidade-Relacionamento
+
+**Arquivo associado:** `der.png` (exportado a partir do código dbdiagram.io incluído no repositório).
+
+## Resumo
+O diagrama representa a modelagem de dados do sistema **SupportCRM (Suportes Plus)**. Foi projetado para suportar operações de help desk: gerenciamento de tickets, clientes, usuários (agentes), filas (queues), SLA, anexos, artigos de conhecimento e rastreamento de atividades.
+
+## Como gerar o diagrama (instruções)
+1. Acesse https://dbdiagram.io.  
+2. Crie um novo diagrama e cole o conteúdo do arquivo `dbdiagram.dbml` (ou copie o DBML disponibilizado no repositório).  
+3. O diagrama será renderizado automaticamente.  
+4. Exporte como `PNG` (Export → PNG) e salve o arquivo com o nome `der.png` dentro de `database/modelos/`.
+
+## Componentes principais do DER
+- **Tabelas centrais:** `tickets`, `customers`, `users` — representam as entidades-chave do sistema.
+- **Relacionamentos 1:N:**  
+  - `customers` 1 — N `tickets` (um cliente pode ter muitos tickets).  
+  - `users` 1 — N `activities` (um usuário pode gerar muitas atividades).  
+- **Relacionamento 1:1:**  
+  - `users` 1 — 1 `user_profiles` (perfil estendido do usuário).  
+- **Relacionamento N:N:**  
+  - `tickets` N — N `ticket_tags` via `ticket_tag_map`.  
+  - `tickets` N — N `knowledge_articles` via `ticket_article_map`.
+- **Regras de integridade:** PKs e FKs estão definidas para garantir consistência referencial (ex.: `ticket_id` em `ticket_messages` referencia `tickets.id`).
+
+## Observações de modelagem
+- Há campos de auditoria (`created_at`, `updated_at`) em tabelas relevantes para rastreabilidade.  
+- Campos que podem ser nulos (ex.: `assigned_id`) são permitidos para refletir estados onde um ticket ainda não foi atribuído.  
+- `external_id` em `tickets` permite integrar com outros sistemas ou canais externos.
+
+## Arquivos relacionados
+- `dbdiagram.dbml` — versão em DBML utilizada para exportar o DER.
+- `mer.md` — descrição detalhada das entidades e relacionamentos.
+- `normalizacao.md` — justificativa da aplicação das formas normais (1FN, 2FN, 3FN).
+
+
