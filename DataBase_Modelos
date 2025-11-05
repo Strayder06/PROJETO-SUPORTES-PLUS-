@@ -34,4 +34,6 @@ O diagrama representa a modelagem de dados do sistema **SupportCRM (Suportes Plu
 - `mer.md` — descrição detalhada das entidades e relacionamentos.
 - `normalizacao.md` — justificativa da aplicação das formas normais (1FN, 2FN, 3FN).
 
+---
+
 
