@@ -6,12 +6,6 @@
 ## Resumo
 O diagrama representa a modelagem de dados do sistema **SupportCRM (Suportes Plus)**. Foi projetado para suportar operações de help desk: gerenciamento de tickets, clientes, usuários (agentes), filas (queues), SLA, anexos, artigos de conhecimento e rastreamento de atividades.
 
-## Como gerar o diagrama (instruções)
-1. Acesse https://dbdiagram.io.  
-2. Crie um novo diagrama e cole o conteúdo do arquivo `dbdiagram.dbml` (ou copie o DBML disponibilizado no repositório).  
-3. O diagrama será renderizado automaticamente.  
-4. Exporte como `PNG` (Export → PNG) e salve o arquivo com o nome `der.png` dentro de `database/modelos/`.
-
 ## Componentes principais do DER
 - **Tabelas centrais:** `tickets`, `customers`, `users` — representam as entidades-chave do sistema.
 - **Relacionamentos 1:N:**  
