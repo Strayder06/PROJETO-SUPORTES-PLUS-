@@ -1,0 +1,150 @@
+Descrição
+
+Diagrama de Contexto (Nível 1) — mostra o sistema Suportes Plus e as interações com atores externos (usuários e serviços de terceiros). O objetivo é dar visão rápida para stakeholders e desenvolvedores sobre quem usa o sistema e quais integrações externas existem.
+
+Diagrama Nivel 1.
+graph LR
+%% Atores externos
+Cliente[Cliente (Usuário Final)]
+Suporte[Equipe de Suporte]
+Administrador[Administrador]
+SistemaExterno[Serviços Terceiros]
+
+
+%% Sistema
+SP[Suportes Plus \n(Sistema ERP/CRM)]
+
+
+%% Integrações externas
+Pagamento[Gateway de Pagamento]
+Email[Serviço de Email/SMS]
+Fiscal[Serviço Fiscal / Nota Fiscal Eletrônica]
+ERPFornec[Sistema ERP Fornecedor]
+
+
+%% Relações
+Cliente -->|Acessa UI (web/mobile)| SP
+Suporte -->|Abre/atende tickets| SP
+Administrador -->|Configura módulos, relatórios| SP
+
+
+SP -->|Processa cobranças| Pagamento
+SP -->|Envia notificações| Email
+SP -->|Emite NF / consulta| Fiscal
+SP -->|Integra estoque/compra| ERPFornec
+
+
+SistemaExterno -->|Fornece contexto (ex: catálogos)| SP
+
+
+%% Banco de dados (visível no contexto)
+SP -->|Armazena dados| DB[(Banco de Dados Central)]
+
+===============
+
+Descrição
+
+Diagrama de Contêineres (Nível 2) — descreve os contêineres de execução do sistema (web app, API, banco, workers, serviços de mensageria) e como eles se comunicam.
+
+flowchart LR
+subgraph CLIENTES
+WebApp[Web App (UI)\nMódulos: Vendas, CRM, Help Desk]
+Mobile[Mobile App]\n
+end
+
+
+subgraph BACKEND
+API[API Backend (REST / GraphQL)]
+Auth[Serviço de Autenticação (OAuth2 / JWT)]
+Worker[Workers / Background Jobs]
+Broker[(Message Broker)]
+end
+
+
+subgraph DATA
+DB[(Banco de Dados Relacional)]
+Cache[(Cache / Redis)]
+Search[(Search Engine / Elastic)]
+end
+
+
+subgraph EXTERNOS
+Payment[Gateway de Pagamento]
+Email[Serviço de Email/SMS]
+Fiscal[Serviço Fiscal]
+ERPFornec[Sistema ERP Fornecedor]
+end
+
+
+WebApp -->|API calls| API
+Mobile -->|API calls| API
+API -->|Auth| Auth
+API -->|Read/Write| DB
+API -->|Leitura rápida| Cache
+API -->|Buscas avançadas| Search
+API -->|Enfileira tarefas| Broker
+Broker -->|Dispara jobs| Worker
+Worker -->|Atualiza| DB
+Worker -->|Envia| Email
+Worker -->|Integra| ERPFornec
+API -->|Processa pagamento| Payment
+API -->|Solicita NF| Fiscal
+
+
+%% Notas
+classDef infra fill:#f9f9f9,stroke:#333,stroke-width:1px;
+class DB,Cache,Search,Broker infra;
+
+================================
+
+Descrição
+
+Diagrama de Componentes (Nível 3) — detalha os componentes internos de um contêiner. Aqui detalhamos o API Backend e seus componentes principais (módulos ERP/CRM), responsabilidades e principais interações.
+
+graph LR
+subgraph API_Backend[API Backend]
+AuthComp[Auth & Identity\n(Login, Roles, Permissões)]
+CustomerComp[Gestão de Clientes (CRM)\nCRUD de clientes, leads]
+TicketComp[Help Desk / Ticketing\nCriação, Roteamento, SLA]
+SalesComp[Vendas & Orçamentos\nPedidos, Cálculo de impostos]
+InventoryComp[Estoque & Inventário\nReservas, Movimentações]
+FinanceComp[Financeiro / Faturamento\nFaturas, Integração com Pagamento]
+ReportComp[Relatórios & Dashboards\nAgregações, exportação]
+NotificationComp[Notificações\nEmail, SMS, Push]
+IntegrationComp[Integrações Externas\nGatewayPagamento, NF-e, ERP fornecedor]
+StorageComp[Repositório de Documentos\nAnexos, Contratos]
+end
+
+
+%% Banco de dados e serviços
+DB[(Banco de Dados Relacional)]
+Cache[(Redis Cache)]
+Broker[(Message Broker)]
+
+
+%% Fluxos
+AuthComp -->|verifica credenciais| DB
+CustomerComp -->|armazenar/ler| DB
+TicketComp -->|gera eventos| Broker
+TicketComp -->|consulta cliente| CustomerComp
+SalesComp -->|cria faturas| FinanceComp
+SalesComp -->|reserva item| InventoryComp
+FinanceComp -->|paga via| IntegrationComp
+InventoryComp -->|atualiza stock| DB
+ReportComp -->|consulta| DB
+NotificationComp -->|empurra mensagens| IntegrationComp
+NotificationComp -->|usa fila| Broker
+IntegrationComp -->|chama| PaymentGateway[Gateway de Pagamento Externo]
+IntegrationComp -->|emite| NFService[Serviço NF-e]
+
+
+%% Persistência / cache
+CustomerComp -->|cache| Cache
+SalesComp -->|cache| Cache
+ReportComp -->|indexa| Search[(Search / Analytics)]
+
+
+%% Observações operacionais
+classDef comp fill:#fffbe6,stroke:#b8860b;
+class API_Backend comp;
+
