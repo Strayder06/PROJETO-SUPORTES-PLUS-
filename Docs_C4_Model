@@ -4,25 +4,25 @@ Diagrama de Contexto (Nível 1) — mostra o sistema Suportes Plus e as interaç
 
 Diagrama Nivel 1.
 graph LR
-%% Atores externos
+# Atores externos
 Cliente[Cliente (Usuário Final)]
 Suporte[Equipe de Suporte]
 Administrador[Administrador]
 SistemaExterno[Serviços Terceiros]
 
 
-%% Sistema
+# Sistema
 SP[Suportes Plus \n(Sistema ERP/CRM)]
 
 
-%% Integrações externas
+# Integrações externas
 Pagamento[Gateway de Pagamento]
 Email[Serviço de Email/SMS]
 Fiscal[Serviço Fiscal / Nota Fiscal Eletrônica]
 ERPFornec[Sistema ERP Fornecedor]
 
 
-%% Relações
+# Relações
 Cliente -->|Acessa UI (web/mobile)| SP
 Suporte -->|Abre/atende tickets| SP
 Administrador -->|Configura módulos, relatórios| SP
@@ -37,7 +37,7 @@ SP -->|Integra estoque/compra| ERPFornec
 SistemaExterno -->|Fornece contexto (ex: catálogos)| SP
 
 
-%% Banco de dados (visível no contexto)
+# Banco de dados (visível no contexto)
 SP -->|Armazena dados| DB[(Banco de Dados Central)]
 
 ===============
@@ -91,7 +91,7 @@ API -->|Processa pagamento| Payment
 API -->|Solicita NF| Fiscal
 
 
-%% Notas
+# Notas
 classDef infra fill:#f9f9f9,stroke:#333,stroke-width:1px;
 class DB,Cache,Search,Broker infra;
 
@@ -116,13 +116,13 @@ StorageComp[Repositório de Documentos\nAnexos, Contratos]
 end
 
 
-%% Banco de dados e serviços
+# Banco de dados e serviços
 DB[(Banco de Dados Relacional)]
 Cache[(Redis Cache)]
 Broker[(Message Broker)]
 
 
-%% Fluxos
+# Fluxos
 AuthComp -->|verifica credenciais| DB
 CustomerComp -->|armazenar/ler| DB
 TicketComp -->|gera eventos| Broker
@@ -138,13 +138,13 @@ IntegrationComp -->|chama| PaymentGateway[Gateway de Pagamento Externo]
 IntegrationComp -->|emite| NFService[Serviço NF-e]
 
 
-%% Persistência / cache
+# Persistência / cache
 CustomerComp -->|cache| Cache
 SalesComp -->|cache| Cache
 ReportComp -->|indexa| Search[(Search / Analytics)]
 
 
-%% Observações operacionais
+# Observações operacionais
 classDef comp fill:#fffbe6,stroke:#b8860b;
 class API_Backend comp;
 
