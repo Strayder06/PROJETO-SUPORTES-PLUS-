@@ -12,7 +12,7 @@ O Suportes PLUS permite o controle completo dos atendimentos, histórico de clie
 Melhorar a eficiência e qualidade do atendimento ao cliente, centralizando as informações e indicadores.
 
 ## Público-Alvo
-Empresas de suporte técnico, call centers e equipes de TI.
+Empresas de Médio e Grande Porte, Empresas de suporte técnico, call centers e equipes de TI.
 
 ## Funcionalidades
 - Cadastro de clientes e técnicos
@@ -22,7 +22,7 @@ Empresas de suporte técnico, call centers e equipes de TI.
 - Base de conhecimento
 
 ## Tecnologias
-My SQL Workbench | SQL Developer | PostgreSQL | Power BI | Figma | dbdiagram.io | GitHub Desktop | Visual Studio Code
+My SQL Workbench | SQL Developer | Power BI | Figma | dbdiagram.io | GitHub Desktop | Visual Studio Code
 
 
 ==================
