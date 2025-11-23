@@ -1,0 +1,338 @@
+# Projeto de Banco de Dados — Sistema de Chamados (HelpDesk / Suporte Técnico)
+
+Este repositório contém o modelo de banco de dados desenvolvido para o sistema de atendimento e gestão de chamados.  
+O projeto inclui tabelas normalizadas, documentação detalhada, justificativas das decisões de modelagem e instruções de conexão ao banco MySQL utilizado pelos grupos.
+
+---
+
+# Sumário
+
+- [ Visão Geral](#-visão-geral)
+- [Estrutura do Banco de Dados](#-estrutura-do-banco-de-dados)
+- [Aplicação das Formas Normais (1FN, 2FN e 3FN)](#-aplicação-das-formas-normais-1fn-2fn-e-3fn)
+  - [1FN](#1fn)
+  - [2FN](#2fn)
+  - [3FN](#3fn)
+  - [Normalizações Flexibilizadas](#normalizações-flexibilizadas)
+- [ Diagrama Entidade-Relacionamento (DER)](#-diagrama-entidade-relacionamento-der)
+- [ Instruções de Conexão ao MySQL](#-instruções-de-conexão-ao-mysql)
+  - [Nome do Banco do Grupo](#nome-do-banco-do-grupo)
+  - [Cuidados Importantes](#cuidados-importantes)
+  - [Recomendações de Segurança](#recomendações-de-segurança)
+- [ Scripts SQL](#-scripts-sql)
+- [ Licença](#-licença)
+
+---
+#  Visão Geral
+
+Este banco de dados foi projetado para suportar um sistema de **gestão de chamados de suporte técnico**, incluindo funcionalidades como:
+
+- Registro de chamados
+- Atribuição de agentes
+- Prioridades, status e SLAs
+- Mensagens internas e externas
+- Controle de anexos
+- Base de conhecimento
+- Filas de atendimento
+- Registro de atividades
+- Clientes, usuários e perfis
+
+O modelo busca manter equilíbrio entre **normalização**, **performance** e **manutenibilidade**, garantindo consistência e organização lógica dos dados.
+
+---
+#  Estrutura do Banco de Dados
+
+O banco é composto por tabelas organizadas em módulos funcionais:
+
+###  Módulo de Usuários e Perfis
+- `usuarios`
+- `perfis_usuario`
+
+###  Módulo de Clientes
+- `clientes`
+- `cliente_sla`
+
+###  Módulo de Chamados
+- `chamados`
+- `mensagens_chamado`
+- `anexos`
+- `tags_chamado`
+- `mapa_tags_chamado`
+- `politicas_sla`
+- `atividades`
+
+###  Base de Conhecimento
+- `artigos_conhecimento`
+- `mapa_artigos_chamado`
+
+###  Filas e Agentes
+- `filas`
+- `agentes_fila`
+
+---
+#  Aplicação das Formas Normais (1FN, 2FN e 3FN)
+
+A modelagem segue rigorosamente as três primeiras Formas Normais, garantindo eliminação de redundâncias e integridade dos dados.
+
+---
+
+## 1FN
+
+- Todos os atributos armazenam apenas **valores atômicos**.
+- Nenhuma coluna contém listas, arrays ou valores concatenados.
+- Relacionamentos N:N foram resolvidos em tabelas associativas.
+
+###  Exemplo:
+Em vez de multiplicar tags por chamado dentro de um mesmo campo:
+- Criou-se `tags_chamado`
+- E a tabela associativa `mapa_tags_chamado`
+
+---
+## 2FN
+
+Aplicada nas tabelas com **chave composta**, garantindo que todos os atributos dependem da chave completa.
+
+###  Tabelas afetadas:
+- `mapa_tags_chamado`
+- `agentes_fila`
+- `mapa_artigos_chamado`
+
+###  Benefício:
+Evita duplicidade e inconsistência de dados em tabelas associativas.
+
+---
+
+## 3FN
+
+Evita dependências transitivas entre atributos.
+
+###  Exemplo:
+- Dados de SLA foram separados de `clientes` e armazenados em `politicas_sla` + `cliente_sla`.
+- Informações detalhadas de perfil foram isoladas em `perfis_usuario`.
+
+---
+# Normalizações Flexibilizadas
+
+Alguns pontos foram propositalmente **desnormalizados** para melhor usabilidade.
+
+###  1. URLs na tabela `anexos`
+**Justificativa:** simplifica integrações com serviços externos.
+
+###  2. Campos de status, prioridade e papel não foram movidos para tabelas auxiliares
+**Justificativa:** baixo número de valores possíveis → evitar complexidade desnecessária.
+
+###  3. Endereço não fragmentado (rua, número, bairro)
+**Justificativa:** não havia necessidade de granularidade elevada.
+
+---
+
+
+Substituir “07” pelo número do seu grupo.
+
+---
+
+## Cuidados Importantes
+
+- Sempre execute:
+```sql
+USE db_grupo_XX;
+
+----
+Nunca altere tabelas ou bancos de outros grupos.
+
+Cuidado ao usar:
+
+DELETE
+
+UPDATE
+
+ALTER TABLE
+
+DROP TABLE
+
+Sempre verifique o banco selecionado com:
+SELECT DATABASE();
+
+---
+
+Recomendações de Segurança
+Criar um usuário restrito
+CREATE USER 'grupoXX_user'@'%' IDENTIFIED BY 'senha_forte';
+GRANT SELECT, INSERT, UPDATE, DELETE ON db_grupo_XX.* TO 'grupoXX_user'@'%';
+
+Evitar
+
+Usar o usuário root diariamente
+
+Conceder privilégios amplos como:
+
+GRANT ALL PRIVILEGES
+
+SUPER, FILE, SHUTDOWN
+
+Compartilhar senhas
+
+---
+Scripts SQL
+
+O script completo do banco pode ser encontrado no diretório:
+/database/scripts/create_tables.sql
+
+Se desejar, posso gerar este arquivo automaticamente no padrão do seu projeto.
+
+---
+
+## Tabelas do Banco de Dados:
+
+CREATE DATABASE suportes_plus;
+USE suportes_plus;
+
+CREATE TABLE usuarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(255),
+    email VARCHAR(255) UNIQUE,
+    telefone VARCHAR(50),
+    papel VARCHAR(50),
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE clientes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome_empresa VARCHAR(255),
+    nome_contato VARCHAR(255),
+    email_contato VARCHAR(255),
+    telefone_contato VARCHAR(50),
+    endereco VARCHAR(255),
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE chamados (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_externo VARCHAR(255) UNIQUE,
+    titulo VARCHAR(255),
+    descricao TEXT,
+    status VARCHAR(50),
+    prioridade VARCHAR(50),
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    cliente_id INT,
+    solicitante_id INT,
+    responsavel_id INT,
+    sla_vencimento_em TIMESTAMP NULL,
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id),
+    FOREIGN KEY (solicitante_id) REFERENCES usuarios(id),
+    FOREIGN KEY (responsavel_id) REFERENCES usuarios(id)
+);
+
+CREATE TABLE mensagens_chamado (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    chamado_id INT,
+    autor_usuario_id INT NULL,
+    autor_cliente_id INT NULL,
+    corpo TEXT,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (chamado_id) REFERENCES chamados(id),
+    FOREIGN KEY (autor_usuario_id) REFERENCES usuarios(id),
+    FOREIGN KEY (autor_cliente_id) REFERENCES clientes(id)
+);
+
+CREATE TABLE tags_chamado (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(255) UNIQUE
+);
+
+CREATE TABLE mapa_tags_chamado (
+    chamado_id INT,
+    tag_id INT,
+    PRIMARY KEY (chamado_id, tag_id),
+    FOREIGN KEY (chamado_id) REFERENCES chamados(id),
+    FOREIGN KEY (tag_id) REFERENCES tags_chamado(id)
+);
+
+CREATE TABLE filas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(255),
+    descricao TEXT,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE agentes_fila (
+    fila_id INT,
+    usuario_id INT,
+    PRIMARY KEY (fila_id, usuario_id),
+    FOREIGN KEY (fila_id) REFERENCES filas(id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+);
+
+CREATE TABLE anexos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    chamado_id INT,
+    nome_arquivo VARCHAR(255),
+    tipo_mime VARCHAR(100),
+    url VARCHAR(500),
+    enviado_por INT NULL,
+    enviado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (chamado_id) REFERENCES chamados(id),
+    FOREIGN KEY (enviado_por) REFERENCES usuarios(id)
+);
+
+CREATE TABLE politicas_sla (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(255),
+    tempo_resposta_minutos INT,
+    tempo_resolucao_minutos INT,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE cliente_sla (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    cliente_id INT,
+    politica_sla_id INT,
+    ativo BOOLEAN,
+    atribuido_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id),
+    FOREIGN KEY (politica_sla_id) REFERENCES politicas_sla(id)
+);
+
+CREATE TABLE atividades (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT,
+    chamado_id INT NULL,
+    acao VARCHAR(255),
+    detalhes TEXT,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
+    FOREIGN KEY (chamado_id) REFERENCES chamados(id)
+);
+
+CREATE TABLE artigos_conhecimento (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    titulo VARCHAR(255),
+    resumo TEXT,
+    conteudo TEXT,
+    autor_id INT,
+    publicado BOOLEAN,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (autor_id) REFERENCES usuarios(id)
+);
+
+CREATE TABLE mapa_artigos_chamado (
+    chamado_id INT,
+    artigo_id INT,
+    PRIMARY KEY (chamado_id, artigo_id),
+    FOREIGN KEY (chamado_id) REFERENCES chamados(id),
+    FOREIGN KEY (artigo_id) REFERENCES artigos_conhecimento(id)
+);
+
+CREATE TABLE perfis_usuario (
+    usuario_id INT PRIMARY KEY,
+    biografia TEXT,
+    avatar_url VARCHAR(500),
+    fuso_horario VARCHAR(100),
+    idioma VARCHAR(50),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+);
