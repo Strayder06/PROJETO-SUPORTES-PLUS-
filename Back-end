@@ -1,0 +1,348 @@
+# Estrutura do Back-End
+
+backend/
+│
+├── src/
+│   ├── config/
+│   │   └── db.js
+│   ├── routes/
+│   │   ├── users.routes.js
+│   │   ├── customers.routes.js
+│   │   └── tickets.routes.js
+│   ├── controllers/
+│   │   ├── users.controller.js
+│   │   ├── customers.controller.js
+│   │   └── tickets.controller.js
+│   ├── services/
+│   │   ├── users.service.js
+│   │   ├── customers.service.js
+│   │   └── tickets.service.js
+│   ├── models/
+│   │   ├── user.model.js
+│   │   ├── customer.model.js
+│   │   └── ticket.model.js
+│   ├── app.js
+│   └── server.js
+│
+├── .env
+├── package.json
+└── api.md   ← documentação solicitada
+
+# Conexão com banco – /src/config/db.js
+import mysql from "mysql2/promise";
+import dotenv from "dotenv";
+dotenv.config();
+
+export const db = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.DB_NAME,
+});
+
+# Modelos
+modelo/usuario.model.js
+export default {
+  table: "users",
+
+  async findAll(db) {
+    const [rows] = await db.query("SELECT * FROM users");
+    return rows;
+  },
+
+  async findById(db, id) {
+    const [rows] = await db.query("SELECT * FROM users WHERE id = ?", [id]);
+    return rows[0];
+  },
+
+  async create(db, data) {
+    const [result] = await db.query(
+      "INSERT INTO users (name, email, phone, role) VALUES (?, ?, ?, ?)",
+      [data.name, data.email, data.phone, data.role]
+    );
+    return result.insertId;
+  },
+
+  async update(db, id, data) {
+    await db.query(
+      "UPDATE users SET name=?, email=?, phone=?, role=? WHERE id=?",
+      [data.name, data.email, data.phone, data.role, id]
+    );
+  },
+
+  async remove(db, id) {
+    await db.query("DELETE FROM users WHERE id = ?", [id]);
+  },
+};
+
+# modelo/cliente.model.js
+export default {
+  async findAll(db) {
+    const [rows] = await db.query("SELECT * FROM customers");
+    return rows;
+  },
+
+  async findById(db, id) {
+    const [rows] = await db.query("SELECT * FROM customers WHERE id = ?", [id]);
+    return rows[0];
+  },
+
+  async create(db, data) {
+    const [result] = await db.query(
+      `INSERT INTO customers (company_name, contact_name, contact_email, contact_phone, address)
+       VALUES (?, ?, ?, ?, ?)`,
+      [
+        data.company_name,
+        data.contact_name,
+        data.contact_email,
+        data.contact_phone,
+        data.address,
+      ]
+    );
+    return result.insertId;
+  },
+
+  async update(db, id, data) {
+    await db.query(
+      `UPDATE customers SET company_name=?, contact_name=?, contact_email=?, 
+      contact_phone=?, address=? WHERE id=?`,
+      [
+        data.company_name,
+        data.contact_name,
+        data.contact_email,
+        data.contact_phone,
+        data.address,
+        id,
+      ]
+    );
+  },
+
+  async remove(db, id) {
+    await db.query("DELETE FROM customers WHERE id = ?", [id]);
+  },
+};
+
+# modelo/ticket.model.js
+export default {
+  async findAll(db) {
+    const [rows] = await db.query("SELECT * FROM tickets");
+    return rows;
+  },
+
+  async findById(db, id) {
+    const [rows] = await db.query("SELECT * FROM tickets WHERE id = ?", [id]);
+    return rows[0];
+  },
+
+  async create(db, data) {
+    const [result] = await db.query(
+      `INSERT INTO tickets (external_id, title, description, status, priority, customer_id, requester_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        data.external_id,
+        data.title,
+        data.description,
+        data.status,
+        data.priority,
+        data.customer_id,
+        data.requester_id,
+      ]
+    );
+    return result.insertId;
+  },
+
+  async update(db, id, data) {
+    await db.query(
+      `UPDATE tickets SET title=?, description=?, status=?, priority=?, assigned_id=?
+       WHERE id=?`,
+      [
+        data.title,
+        data.description,
+        data.status,
+        data.priority,
+        data.assigned_id,
+        id,
+      ]
+    );
+  },
+
+  async remove(db, id) {
+    await db.query("DELETE FROM tickets WHERE id = ?", [id]);
+  },
+};
+
+# serviços/cliente.service.js
+import Customer from "../models/customer.model.js";
+import { db } from "../config/db.js";
+
+export default {
+  getAll: () => Customer.findAll(db),
+  getOne: (id) => Customer.findById(db, id),
+  create: (data) => Customer.create(db, data),
+  update: (id, data) => Customer.update(db, id, data),
+  remove: (id) => Customer.remove(db, id),
+};
+
+# controllers/customers.controller.js
+import CustomersService from "../services/customers.service.js";
+
+export default {
+  async list(req, res) {
+    const data = await CustomersService.getAll();
+    res.json(data);
+  },
+
+  async get(req, res) {
+    const data = await CustomersService.getOne(req.params.id);
+    if (!data) return res.status(404).json({ message: "Customer not found" });
+    res.json(data);
+  },
+
+  async create(req, res) {
+    const id = await CustomersService.create(req.body);
+    res.status(201).json({ id });
+  },
+
+  async update(req, res) {
+    await CustomersService.update(req.params.id, req.body);
+    res.json({ message: "Updated successfully" });
+  },
+
+  async remove(req, res) {
+    await CustomersService.remove(req.params.id);
+    res.json({ message: "Deleted" });
+  },
+};
+
+# routes/customers.routes.js
+import express from "express";
+import Controller from "../controllers/customers.controller.js";
+
+const router = express.Router();
+
+router.get("/", Controller.list);
+router.get("/:id", Controller.get);
+router.post("/", Controller.create);
+router.put("/:id", Controller.update);
+router.delete("/:id", Controller.remove);
+
+export default router;
+
+# app.js
+import express from "express";
+import usersRoutes from "./routes/users.routes.js";
+import customersRoutes from "./routes/customers.routes.js";
+import ticketsRoutes from "./routes/tickets.routes.js";
+
+const app = express();
+app.use(express.json());
+
+app.use("/api/users", usersRoutes);
+app.use("/api/customers", customersRoutes);
+app.use("/api/tickets", ticketsRoutes);
+
+export default app;
+
+# server.js
+import app from "./app.js";
+
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`API running on port ${PORT}`);
+});
+
+# DOCUMENTAÇÃO DA API
+# API – Suportes Plus Help Desk
+
+API oficial do sistema CRM/Help Desk Suportes Plus.
+
+---
+
+##  Endpoints da API
+
+###  Users (`/api/users`)
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET    | /api/users | Lista todos os usuários |
+| GET    | /api/users/:id | Obtém um usuário |
+| POST   | /api/users | Cria um usuário |
+| PUT    | /api/users/:id | Atualiza um usuário |
+| DELETE | /api/users/:id | Exclui um usuário |
+
+---
+
+###  Customers (`/api/customers`)
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET    | /api/customers | Lista todos |
+| GET    | /api/customers/:id | Obtém um cliente |
+| POST   | /api/customers | Cria um cliente |
+| PUT    | /api/customers/:id | Atualiza |
+| DELETE | /api/customers/:id | Remove |
+
+---
+
+###  Tickets (`/api/tickets`)
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET    | /api/tickets | Lista tickets |
+| GET    | /api/tickets/:id | Obtém um ticket |
+| POST   | /api/tickets | Cria um ticket |
+| PUT    | /api/tickets/:id | Atualiza |
+| DELETE | /api/tickets/:id | Remove |
+
+---
+
+##  Estrutura JSON
+
+### Exemplo de criação de cliente
+
+```json
+{
+  "company_name": "Tech Soluções",
+  "contact_name": "Marcos Silva",
+  "contact_email": "marcos@tech.com",
+  "contact_phone": "11999998888",
+  "address": "Av Paulista, 1000"
+}
+
+# Exemplo de criação de ticket
+{
+  "external_id": "INT-3493",
+  "title": "Erro ao acessar portal",
+  "description": "Usuário relata página em branco ao tentar login.",
+  "status": "open",
+  "priority": "high",
+  "customer_id": 1,
+  "requester_id": 2
+}
+
+# Use Postman/Insomnia
+GET http://localhost:3000/api/customers
+
+POST http://localhost:3000/api/tickets
+
+PUT http://localhost:3000/api/users/1
+
+# Variáveis de Ambiente
+DB_HOST=localhost
+DB_USER=root
+DB_PASS=123456
+DB_NAME=support_plus
+PORT=3000
+
+# Executando
+npm install
+npm run dev
+
+# Boas práticas aplicadas:
+Arquitetura em camadas (routes, controllers, services, models)
+  Código limpo e padronizado
+  Variáveis de ambiente com dotenv
+  Tratamento de erros básico
+  API alinhada ao MER/DER
+  Pronta para integração com o frontend
