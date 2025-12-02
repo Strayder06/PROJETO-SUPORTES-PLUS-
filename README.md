@@ -22,7 +22,7 @@ Empresas de Médio e Grande Porte, Empresas de suporte técnico, call centers e 
 - Base de conhecimento
 
 ## Tecnologias
-My SQL Workbench | SQL Developer | Power BI | Figma | dbdiagram.io | GitHub Desktop | Visual Studio Code
+My SQL Workbench | SQL Developer | Power BI | Figma | dbdiagram.io | GitHub Desktop | Visual Studio Code | Bizagi Modeler
 
 
 ==================
