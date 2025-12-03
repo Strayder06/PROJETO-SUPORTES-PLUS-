@@ -83,7 +83,7 @@ O foco é assegurar que o projeto mantenha sua **qualidade, prazos e objetivos e
 O monitoramento dos riscos será **contínuo**, com revisões **quinzenais** realizadas pela equipe de gestão e desenvolvimento do projeto.  
 Durante essas reuniões, serão reavaliados os níveis de probabilidade e impacto, além da eficácia das ações de mitigação já adotadas.
 
-Além disso, todas as decisões e atualizações da matriz de risco serão documentadas no **repositório do GitHub do projeto CRM Suportes+**, garantindo **transparência, rastreabilidade e controle histórico** das ações corretivas implementadas.
+Além disso, todas as decisões e atualizações da matriz de risco serão documentadas no **repositório do GitHub do projeto Suportes Plus**, garantindo **transparência, rastreabilidade e controle histórico** das ações corretivas implementadas.
 
 
 
