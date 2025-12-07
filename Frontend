@@ -1,1 +1,476 @@
+# Suportes Plus — Frontend (React + Vite)
+
+Este repositório contém um **projeto front-end** pronto para você copiar/colar e subir no GitHub. Ele implementa: Tela de Login, Dashboard e Gestão de Entidades (clientes) com navegação, layout responsivo e dados mockados.
+
+> Observação: os *wireframes/mockups* devem ser salvos na pasta `frontend/design` como imagens (.png/.jpg) ou PDF. Adicione arquivos exportados do Figma/Miro/Canva aí.
+
+---
+
+## Estrutura sugerida de arquivos
+
+```
+suportes-plus-frontend/
+├─ .gitignore
+├─ package.json
+├─ index.html
+├─ README.md
+├─ frontend/
+│  ├─ design/               # coloque aqui os wireframes (PNG, PDF)
+│  └─ src/
+│     ├─ main.jsx
+│     ├─ App.jsx
+│     ├─ index.css
+│     ├─ data/
+│     │  └─ mockEntities.js
+│     ├─ components/
+│     │  ├─ Sidebar.jsx
+│     │  ├─ Topbar.jsx
+│     │  ├─ Card.jsx
+│     │  └─ EntityTable.jsx
+│     └─ pages/
+│        ├─ Login.jsx
+│        ├─ Dashboard.jsx
+│        └─ Entities.jsx
+```
+
+---
+
+## Como usar (localmente)
+
+1. Criar a pasta do projeto e inicializar (exemplo com Vite):
+
+```bash
+npm create vite@latest suportes-plus-frontend -- --template react
+cd suportes-plus-frontend
+# Substituir o conteúdo de src/ e index.html pelos arquivos deste repositório
+npm install
+npm run dev
+```
+
+2. Alternativamente, clone este repositório (quando criado no GitHub) e rode `npm install` e `npm run dev`.
+
+---
+
+## Padrões e boas práticas já aplicadas
+
+- Componentização (Sidebar, Topbar, Card, EntityTable).
+- Rotas com `react-router-dom` (Login → Dashboard → Gestão de Entidades).
+- Layout responsivo com CSS flexbox e media queries.
+- Dados mockados em `data/mockEntities.js` para facilitar integração futura com API.
+- README com instruções de execução e sugestões de commits.
+
+---
+
+## Sugestão de commits iniciais para versionamento no GitHub
+
+1. `chore: inicializar projeto Vite + React`
+2. `feat: adicionar telas Login, Dashboard, Entities e navegação`
+3. `style: colocar estilos básicos e layout responsivo`
+4. `feat: adicionar componentes reutilizáveis (Sidebar, Topbar, Card, EntityTable)`
+5. `docs: adicionar README e instruções de uso`
+
+---
+
+## Conteúdo dos arquivos principais
+
+### package.json (exemplo mínimo)
+
+```json
+{
+  "name": "suportes-plus-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.14.1"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}
+```
+
+### index.html
+
+```html
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Suportes Plus — Frontend</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/frontend/src/main.jsx"></script>
+  </body>
+</html>
+```
+
+### frontend/src/main.jsx
+
+```jsx
+import React from 'react'
+import { createRoot } from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
+import App from './App'
+import './index.css'
+
+createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </React.StrictMode>
+)
+```
+
+### frontend/src/App.jsx
+
+```jsx
+import React from 'react'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import Login from './pages/Login'
+import Dashboard from './pages/Dashboard'
+import Entities from './pages/Entities'
+
+function App() {
+  const isAuthenticated = () => !!localStorage.getItem('sp_user')
+
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route
+        path="/"
+        element={isAuthenticated() ? <Dashboard /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/entities"
+        element={isAuthenticated() ? <Entities /> : <Navigate to="/login" replace />}
+      />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  )
+}
+
+export default App
+```
+
+### frontend/src/index.css
+
+```css
+:root{
+  --primary:#0066cc;
+  --muted:#6b7280;
+  --bg:#f5f7fb;
+  --card:#ffffff;
+}
+*{box-sizing:border-box}
+body{font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; margin:0; background:var(--bg); color:#111}
+
+.app-layout{display:flex; min-height:100vh}
+.sidebar{width:260px; background:var(--card); border-right:1px solid #e6e9ef; padding:20px}
+.content{flex:1; padding:20px}
+.topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:20px}
+.card{background:var(--card); padding:16px; border-radius:8px; box-shadow:0 1px 2px rgba(15,15,15,0.03);}
+
+/* Responsive */
+@media (max-width: 800px){
+  .sidebar{display:none}
+  .content{padding:12px}
+}
+
+.table{width:100%; border-collapse:collapse}
+.table th, .table td{padding:10px; text-align:left; border-bottom:1px solid #eef2f7}
+.button{background:var(--primary); color:#fff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer}
+.button.ghost{background:transparent; color:var(--primary); border:1px solid rgba(0,102,204,0.12)}
+
+.form{max-width:420px}
+.input{display:block; width:100%; padding:10px; margin-bottom:12px; border-radius:6px; border:1px solid #e6e9ef}
+```
+
+### frontend/src/data/mockEntities.js
+
+```js
+export const clients = [
+  { id: 1, name: 'João Silva', email: 'joao.silva@example.com', phone: '(11) 99999-0001', company: 'Empresa A' },
+  { id: 2, name: 'Maria Souza', email: 'maria.souza@example.com', phone: '(11) 99999-0002', company: 'Empresa B' },
+  { id: 3, name: 'Carlos Pereira', email: 'carlos.pereira@example.com', phone: '(11) 99999-0003', company: 'Empresa C' }
+]
+```
+
+### frontend/src/components/Sidebar.jsx
+
+```jsx
+import React from 'react'
+import { Link } from 'react-router-dom'
+
+export default function Sidebar(){
+  return (
+    <aside className="sidebar">
+      <h2>Suportes Plus</h2>
+      <nav>
+        <ul style={{listStyle:'none', padding:0}}>
+          <li><Link to="/">Dashboard</Link></li>
+          <li><Link to="/entities">Clientes</Link></li>
+          <li><a href="#">Chamados</a></li>
+          <li><a href="#">Relatórios</a></li>
+        </ul>
+      </nav>
+      <div style={{marginTop:24}}>
+        <small style={{color:'#6b7280'}}>v1.0 — Protótipo</small>
+      </div>
+    </aside>
+  )
+}
+```
+
+### frontend/src/components/Topbar.jsx
+
+```jsx
+import React from 'react'
+
+export default function Topbar({onLogout}){
+  return (
+    <div className="topbar">
+      <div>
+        <h3>Visão geral</h3>
+        <small style={{color:'#6b7280'}}>Bem-vindo ao painel da Suportes Plus</small>
+      </div>
+      <div>
+        <button className="button ghost" onClick={onLogout}>Sair</button>
+      </div>
+    </div>
+  )
+}
+```
+
+### frontend/src/components/Card.jsx
+
+```jsx
+import React from 'react'
+
+export default function Card({title, children}){
+  return (
+    <div className="card" style={{marginBottom:16}}>
+      {title && <h4 style={{marginTop:0}}>{title}</h4>}
+      {children}
+    </div>
+  )
+}
+```
+
+### frontend/src/components/EntityTable.jsx
+
+```jsx
+import React from 'react'
+
+export default function EntityTable({data, onEdit, onDelete}){
+  return (
+    <table className="table">
+      <thead>
+        <tr><th>Nome</th><th>E-mail</th><th>Telefone</th><th>Empresa</th><th></th></tr>
+      </thead>
+      <tbody>
+        {data.map(r => (
+          <tr key={r.id}>
+            <td>{r.name}</td>
+            <td>{r.email}</td>
+            <td>{r.phone}</td>
+            <td>{r.company}</td>
+            <td style={{textAlign:'right'}}>
+              <button className="button ghost" onClick={() => onEdit(r)}>Editar</button>
+              <button className="button" style={{marginLeft:8}} onClick={() => onDelete(r.id)}>Excluir</button>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
+}
+```
+
+### frontend/src/pages/Login.jsx
+
+```jsx
+import React, {useState} from 'react'
+import { useNavigate } from 'react-router-dom'
+
+export default function Login(){
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const navigate = useNavigate()
+
+  function handleSubmit(e){
+    e.preventDefault()
+    // Mock auth
+    if(email && password){
+      localStorage.setItem('sp_user', JSON.stringify({email}))
+      navigate('/')
+    } else {
+      alert('Preencha usuário e senha (mock).')
+    }
+  }
+
+  return (
+    <div style={{display:'flex', justifyContent:'center', alignItems:'center', minHeight:'100vh', padding:20}}>
+      <div style={{width:360}}>
+        <div className="card">
+          <h2 style={{marginTop:0}}>Entrar — Suportes Plus</h2>
+          <form className="form" onSubmit={handleSubmit}>
+            <input className="input" placeholder="E-mail" value={email} onChange={e => setEmail(e.target.value)} />
+            <input className="input" placeholder="Senha" type="password" value={password} onChange={e => setPassword(e.target.value)} />
+            <button className="button" type="submit">Entrar</button>
+          </form>
+        </div>
+        <p style={{color:'#6b7280', marginTop:12}}>Use qualquer e-mail e senha (autenticação mock)</p>
+      </div>
+    </div>
+  )
+}
+```
+
+### frontend/src/pages/Dashboard.jsx
+
+```jsx
+import React from 'react'
+import Sidebar from '../components/Sidebar'
+import Topbar from '../components/Topbar'
+import Card from '../components/Card'
+import { useNavigate } from 'react-router-dom'
+
+export default function Dashboard(){
+  const navigate = useNavigate()
+
+  function logout(){
+    localStorage.removeItem('sp_user')
+    navigate('/login')
+  }
+
+  return (
+    <div className="app-layout">
+      <Sidebar />
+      <main className="content">
+        <Topbar onLogout={logout} />
+        <Card title="Resumo de chamados">
+          <div style={{display:'flex', gap:12, flexWrap:'wrap'}}>
+            <div className="card" style={{minWidth:180}}>
+              <h5>Chamados Abertos</h5>
+              <strong style={{fontSize:20}}>12</strong>
+            </div>
+            <div className="card" style={{minWidth:180}}>
+              <h5>Chamados em Andamento</h5>
+              <strong style={{fontSize:20}}>5</strong>
+            </div>
+            <div className="card" style={{minWidth:180}}>
+              <h5>Clientes</h5>
+              <strong style={{fontSize:20}}>34</strong>
+            </div>
+          </div>
+        </Card>
+
+        <Card title="Ações rápidas">
+          <div style={{display:'flex', gap:8}}>
+            <button className="button" onClick={() => navigate('/entities')}>Ver Clientes</button>
+            <button className="button ghost">Criar Chamado</button>
+          </div>
+        </Card>
+      </main>
+    </div>
+  )
+}
+```
+
+### frontend/src/pages/Entities.jsx
+
+```jsx
+import React, {useState} from 'react'
+import Sidebar from '../components/Sidebar'
+import Topbar from '../components/Topbar'
+import Card from '../components/Card'
+import EntityTable from '../components/EntityTable'
+import { clients } from '../data/mockEntities'
+import { useNavigate } from 'react-router-dom'
+
+export default function Entities(){
+  const [data, setData] = useState(clients)
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [editing, setEditing] = useState(null)
+  const navigate = useNavigate()
+
+  function logout(){
+    localStorage.removeItem('sp_user')
+    navigate('/login')
+  }
+
+  function handleAdd(e){
+    e.preventDefault()
+    if(!name || !email) return alert('Preencha nome e email')
+    if(editing){
+      setData(d => d.map(it => it.id === editing.id ? {...it, name, email} : it))
+      setEditing(null)
+    } else {
+      const id = Math.max(0, ...data.map(d=>d.id)) + 1
+      setData(d => [...d, {id, name, email, phone:'(00) 00000-0000', company:''}])
+    }
+    setName('')
+    setEmail('')
+  }
+
+  function handleEdit(row){
+    setEditing(row)
+    setName(row.name)
+    setEmail(row.email)
+  }
+
+  function handleDelete(id){
+    if(window.confirm('Excluir registro?')) setData(d => d.filter(r => r.id !== id))
+  }
+
+  return (
+    <div className="app-layout">
+      <Sidebar />
+      <main className="content">
+        <Topbar onLogout={logout} />
+
+        <Card title="Gestão de Clientes">
+          <form onSubmit={handleAdd} style={{display:'flex', gap:8, alignItems:'center', marginBottom:12, flexWrap:'wrap'}}>
+            <input className="input" placeholder="Nome" value={name} onChange={e=>setName(e.target.value)} />
+            <input className="input" placeholder="E-mail" value={email} onChange={e=>setEmail(e.target.value)} />
+            <button className="button" type="submit">{editing ? 'Salvar' : 'Adicionar'}</button>
+            {editing && <button type="button" className="button ghost" onClick={() => {setEditing(null); setName(''); setEmail('')}}>Cancelar</button>}
+          </form>
+
+          <EntityTable data={data} onEdit={handleEdit} onDelete={handleDelete} />
+        </Card>
+      </main>
+    </div>
+  )
+}
+```
+
+### README.md (resumo — inclua no repo)
+
+```md
+# Suportes Plus — Frontend
+
+Protótipo front-end para o sistema de help desk Suportes Plus.
+
+## Telas implementadas
+- Login (autenticação mock)
+- Dashboard (visão geral + atalhos)
+- Gestão de Entidades (clientes) — lista, adicionar, editar, excluir (mock)
+
+----
+
+
+
+
 
